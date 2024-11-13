@@ -1,0 +1,26 @@
+# Môi trường ảo
+env/
+venv/
+.venv/
+
+# Byte-compiled / Cached files
+*.pyc
+__pycache__/
+
+# Hệ thống
+.DS_Store
+Thumbs.db
+
+# Tệp cấu hình
+.env
+
+# Cơ sở dữ liệu
+*.sqlite3
+
+# Tệp static và media
+staticfiles/
+media/
+
+# IDE
+.vscode/
+.idea/

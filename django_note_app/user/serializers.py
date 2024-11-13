@@ -9,23 +9,15 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.CharField()
     password = serializers.CharField()
 
     def validate(self, attrs):
-        username = attrs.get('username')
+        email = attrs.get('email')
         password = attrs.get('password')
 
-        # Tìm kiếm người dùng trong bảng User
-        try:
-            user = User.objects.filter(username=username, password=password)
-            print(user, 'user ne')
-        except User.DoesNotExist:
-            raise serializers.ValidationError("User not found")
-        print(user, 'user ne2')
         # Xác thực người dùng
-        user = authenticate(username=username, password=password)
-        
+        user = authenticate(email=email, password=password)
         if user is None:
             raise serializers.ValidationError('Invalid credentials')
 

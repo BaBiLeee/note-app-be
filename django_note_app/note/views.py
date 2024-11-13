@@ -1,32 +1,12 @@
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .models import Note
 from .serializers import NoteSerializer
-# Create your views here.
-
-# class NoteViewSet(viewsets.ModelViewSet):
-#     queryset = Note.objects.all()
-#     serializer_class = NoteSerializer
-
-# class TypeViewSet(viewsets.ModelViewSet):
-#     queryset = Type.objects.all()
-#     serializer_class = TypeSerializer
-
-# class GroupViewSet(viewsets.ModelViewSet):
-#     queryset = Group.objects.all()
-#     serializer_class = GroupSerializer
-
-# class UserViewSet(viewsets.ModelViewSet):
-#     queryset = User.objects.all()
-#     serializer_class = UserSerializer
-
-# @api_view()
-# def view_dtl(request):
-#     return Response({'success': 409, 'message': 'api'})
-
 
 @api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])  # Yêu cầu người dùng phải xác thực
 def view_note(request):
     # GET method to retrieve all notes
     if request.method == 'GET':

@@ -1,16 +1,20 @@
 from django.db import models
+from user.models import User
 # Create your models here.
 
 class Note(models.Model):
-    title = models.TextField()
-    content = models.TextField()
+    user = models.ForeignKey(User, on_delete = models.CASCADE)
     type = models.IntegerField()
-    create_at = models.DateTimeField(auto_now_add=True)
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = False
         db_table = 'note'
     
+
 
     
 

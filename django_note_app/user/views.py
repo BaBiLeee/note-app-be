@@ -17,7 +17,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 def user_list(request):
     users = User.objects.all()  # Lấy toàn bộ người dùng
     serializer = SimpleUserSerializer(users, many=True)
-    return Response({'msg': 'Successfully retrieved user data', 'data': serializer.data}, status=status.HTTP_200_OK)
+    return Response({'message': 'Successfully retrieved user data', 'data': serializer.data}, status=status.HTTP_200_OK)
     
 
 @api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
@@ -29,7 +29,7 @@ def view_user(request):
             user_obj = User.objects.filter(id=request.user.id)
         
         serializer = UserSerializer(user_obj, many=True)
-        return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+        return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
     
 
 
@@ -38,7 +38,7 @@ def view_user(request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'msg': 'User created successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'User created successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # PUT method to update a User (full update)
@@ -47,7 +47,7 @@ def view_user(request):
         serializer = UserSerializer(user_obj, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'msg': 'user updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'message': 'user updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # PATCH method to partially update a user
@@ -56,16 +56,16 @@ def view_user(request):
         serializer = UserSerializer(user_obj, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({'msg': 'user updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'message': 'user updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # DELETE method to delete a user
     elif request.method == 'DELETE':
         user_obj = User.objects.get(pk=request.data.get('id'))
         user_obj.delete()
-        return Response({'msg': 'user deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'user deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
-    return Response({'msg': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 # API đăng ký người dùng mới
 class UserRegistrationView(APIView):
@@ -90,7 +90,7 @@ class UserRegistrationView(APIView):
             )
 
             return Response({
-                "msg": "User registered successfully. Check your email for the verification link."
+                "message": "User registered successfully. Check your email for the verification link."
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -123,6 +123,7 @@ class LoginAPI(APIView):
                             "id": user.id,
                             "email": user.email,
                             "fullname": user.fullname,
+                            "admin": user.admin
                         }
                     }
                 },

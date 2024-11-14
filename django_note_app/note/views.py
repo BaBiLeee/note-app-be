@@ -9,14 +9,29 @@ from .serializers import NoteSerializer
 @permission_classes([IsAuthenticated])  # Yêu cầu người dùng phải xác thực
 def view_note(request):
     # GET method to retrieve all notes
+    # if request.method == 'GET':
+    #     note_obj = Note.objects.all()
+    #     serializer = NoteSerializer(note_obj, many=True)
+    #     return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+
     if request.method == 'GET':
-        note_obj = Note.objects.all()
-        serializer = NoteSerializer(note_obj, many=True)
-        return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+            if request.user.admin:
+                note_obj = Note.objects.all()
+            else:
+                note_obj = Note.objects.filter(user=request.user.id)
+                print("1",request.user.id)
+                print("2",note_obj)
+
+
+            serializer = NoteSerializer(note_obj, many=True)
+            return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+
 
     # POST method to create a new note
     elif request.method == 'POST':
-        serializer = NoteSerializer(data=request.data)
+        data = request.data.copy()
+        data['user'] = request.user.id
+        serializer = NoteSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response({'msg': 'note created successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)

@@ -14,7 +14,7 @@ class SharedNote(models.Model):
         return f"{self.user.fullname} - {self.note.title} - {self.get_access_level_display()}"
 
     class Meta:
-        managed = False
+        # managed = False
         db_table = 'shared_note'
     
 

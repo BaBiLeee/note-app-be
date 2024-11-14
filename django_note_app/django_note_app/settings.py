@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'note',
     'shared_note',
     'user',
+    'shared',
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -24,3 +24,8 @@ class LoginSerializer(serializers.Serializer):
         # Nếu xác thực thành công, trả về user
         attrs['user'] = user
         return attrs
+
+class SimpleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'fullname']  

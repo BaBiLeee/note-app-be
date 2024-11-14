@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import User
-from .serializers import UserSerializer, LoginSerializer
+from .serializers import SimpleUserSerializer, UserSerializer, LoginSerializer
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
@@ -14,15 +14,24 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 # View để xử lý user CRUD
 @api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
+def user_list(request):
+    users = User.objects.all()  # Lấy toàn bộ người dùng
+    serializer = SimpleUserSerializer(users, many=True)
+    return Response({'msg': 'Successfully retrieved user data', 'data': serializer.data}, status=status.HTTP_200_OK)
+    
+
+@api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 def view_user(request):
-    # GET method to retrieve all users
     if request.method == 'GET':
-        # Kiểm tra quyền admin ở đây
-        if not request.user.admin:
-            return Response({"error": "You do not have permission to view users"}, status=status.HTTP_403_FORBIDDEN)
-        user_obj = User.objects.all()
+        if request.user.admin:
+            user_obj = User.objects.all()
+        else:
+            user_obj = User.objects.filter(id=request.user.id)
+        
         serializer = UserSerializer(user_obj, many=True)
         return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+    
+
 
     # POST method to create a new user
     elif request.method == 'POST':
@@ -93,6 +102,15 @@ class LoginAPI(APIView):
 
         if serializer.is_valid():
             user = serializer.validated_data['user']
+            
+            # Kiểm tra trạng thái tài khoản người dùng
+            if not user.status:
+                return Response(
+                    {"message": "You need to activate your account first"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Tạo token cho người dùng
             refresh = RefreshToken.for_user(user)
 
             # Trả về token kèm theo thông tin người dùng
@@ -111,21 +129,117 @@ class LoginAPI(APIView):
                 status=status.HTTP_200_OK
             )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Nếu thông tin đăng nhập không hợp lệ
+        return Response(
+            {"message": "Invalid login credentials", "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
 
 class VerifyEmailView(APIView):
     def get(self, request, token):
         try:
-            # Giải mã token để lấy user_id
+            # Decode the token to retrieve the user_id
             decoded_token = UntypedToken(token)
             user_id = decoded_token.get('user_id')
-            
-            # Lấy đối tượng người dùng dựa trên user_id
+
+            # Retrieve the user object based on user_id
             user = User.objects.get(id=user_id)
-            user.status = True  # Cập nhật trạng thái thành đã xác thực
+            user.status = True  # Update status to verified
             user.save()
 
-            return HttpResponse("Your email has been verified and your account is now active.", status=200)
+            # HTML response with styling and auto-redirect to login page
+            html_content = """
+            <html>
+                <head>
+                    <style>
+                        body { 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            height: 100vh; 
+                            background-color: #f3f4f6; 
+                            margin: 0; 
+                            font-family: Arial, sans-serif; 
+                            color: #333; 
+                        }
+                        .message-box {
+                            text-align: center;
+                            padding: 20px;
+                            border-radius: 8px;
+                            background-color: #fff;
+                            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                            max-width: 400px;
+                        }
+                        .message-box h2 { 
+                            color: #4CAF50; 
+                        }
+                        .message-box p { 
+                            font-size: 16px; 
+                        }
+                    </style>
+                    <script>
+                        setTimeout(function(){
+                            window.location.href = 'http://localhost:3000/login';
+                        }, 2000);
+                    </script>
+                </head>
+                <body>
+                    <div class="message-box">
+                        <h2>Email Verified</h2>
+                        <p>Your email has been verified and your account is now active.</p>
+                        <p>You will be redirected to the login page shortly...</p>
+                    </div>
+                </body>
+            </html>
+            """
+
+            return HttpResponse(html_content, content_type="text/html", status=200)
         
         except (InvalidToken, TokenError, User.DoesNotExist):
-            return HttpResponse("Invalid or expired verification link.", status=400)
+            # Error HTML response
+            error_content = """
+            <html>
+                <head>
+                    <style>
+                        body { 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            height: 100vh; 
+                            background-color: #f3f4f6; 
+                            margin: 0; 
+                            font-family: Arial, sans-serif; 
+                            color: #333; 
+                        }
+                        .message-box {
+                            text-align: center;
+                            padding: 20px;
+                            border-radius: 8px;
+                            background-color: #fff;
+                            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                            max-width: 400px;
+                        }
+                        .message-box h2 { 
+                            color: #e74c3c; 
+                        }
+                        .message-box p { 
+                            font-size: 16px; 
+                        }
+                    </style>
+                    <script>
+                        setTimeout(function(){
+                            window.location.href = 'http://localhost:3000/login';
+                        }, 2000);
+                    </script>
+                </head>
+                <body>
+                    <div class="message-box">
+                        <h2>Verification Failed</h2>
+                        <p>Invalid or expired verification link.</p>
+                        <p>You will be redirected to the login page shortly...</p>
+                    </div>
+                </body>
+            </html>
+            """
+            return HttpResponse(error_content, content_type="text/html", status=400)

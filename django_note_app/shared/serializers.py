@@ -9,16 +9,5 @@ class SharedSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="note.user_id")
     class Meta:
         model = Shared
-        fields = [
-            'id',
-            'note',
-            'note_title',
-            'note_content',
-            'shared',
-            'shared_with_username',
-            'can_view',
-            'can_edit',
-            'shared_at',
-            "owner",
-        ]
-        read_only_fields = ['note_title', 'shared_with_username', 'shared_at']
+        fields = '__all__'
+        

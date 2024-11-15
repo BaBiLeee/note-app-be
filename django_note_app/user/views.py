@@ -1,5 +1,6 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .models import User
 from .serializers import SimpleUserSerializer, UserSerializer, LoginSerializer
@@ -31,42 +32,60 @@ def view_user(request):
         serializer = UserSerializer(user_obj, many=True)
         return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
     
-
-
-    # POST method to create a new user
-    elif request.method == 'POST':
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'User created successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # PUT method to update a User (full update)
-    elif request.method == 'PUT':
-        user_obj = User.objects.get(pk=request.data.get('id'))
-        serializer = UserSerializer(user_obj, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'user updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     # PATCH method to partially update a user
     elif request.method == 'PATCH':
-        user_obj = User.objects.get(pk=request.data.get('id'))
-        serializer = UserSerializer(user_obj, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'message': 'user updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Lấy user object
+            user_id = request.data.get('id')
+            user_obj = User.objects.get(pk=user_id)
+
+            # Kiểm tra quyền: admin hoặc chính người dùng
+            if request.user.admin or user_obj.id == user_id:
+                serializer = UserSerializer(user_obj, data=request.data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({'message': 'User updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"message": "You don't have permission"}, status=status.HTTP_403_FORBIDDEN)
+
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # DELETE method to delete a user
     elif request.method == 'DELETE':
-        user_obj = User.objects.get(pk=request.data.get('id'))
-        user_obj.delete()
-        return Response({'message': 'user deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        if request.user.admin:
+            user_obj = User.objects.get(pk=request.data.get('id'))
+            user_obj.delete()
+            return Response({'message': 'user deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
     return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])  # Chỉ cho phép người dùng đã đăng nhập
+def update_status(request, user_id):
+    try:
+        # Lấy user object
+        user_obj = get_object_or_404(User, pk=user_id)
+
+        # Kiểm tra quyền: chỉ cho phép admin
+        if request.user.admin:
+            # Đảo ngược giá trị của trường `status`
+            user_obj.status = not user_obj.status
+            user_obj.save()  # Lưu lại thay đổi
+
+            # Serialize lại user và trả về kết quả
+            serializer = UserSerializer(user_obj)
+            return Response({'message': 'User status updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "You don't have permission"}, status=status.HTTP_403_FORBIDDEN)
+
+    except User.DoesNotExist:
+        return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 # API đăng ký người dùng mới
 class UserRegistrationView(APIView):
     def post(self, request):

@@ -19,7 +19,7 @@ def view_note(request):
                 note_obj = Note.objects.filter(user=request.user.id)
 
             serializer = NoteSerializer(note_obj, many=True)
-            return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
 
     # POST method to create a new note
     elif request.method == 'POST':
@@ -28,16 +28,16 @@ def view_note(request):
         serializer = NoteSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'msg': 'note created successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'note created successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # DELETE method to delete a note
     elif request.method == 'DELETE':
         note_obj = Note.objects.get(pk=request.data.get('id'))
         note_obj.delete()
-        return Response({'msg': 'note deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'note deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
-    return Response({'msg': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])  # Chỉ cho phép người dùng đã đăng nhập
@@ -49,12 +49,12 @@ def get_note_by_id(request, note_id):
         # Kiểm tra nếu người dùng là admin
         if request.user.admin:
             serializer = NoteSerializer(note_obj)
-            return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
         
         # Kiểm tra nếu người dùng là chủ sở hữu của ghi chú
         if note_obj.user.id == request.user.id:
             serializer = NoteSerializer(note_obj)
-            return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
         
         # Kiểm tra nếu ghi chú được chia sẻ với người dùng này
         try:
@@ -63,15 +63,15 @@ def get_note_by_id(request, note_id):
             # Kiểm tra quyền xem (VIEW) trong Share model
             if 1:
                 serializer = NoteSerializer(note_obj)
-                return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+                return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
             else:
-                return Response({'msg': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+                return Response({'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         
         except Shared.DoesNotExist:
-            return Response({'msg': 'Unauthorized access'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Unauthorized access'}, status=status.HTTP_403_FORBIDDEN)
 
     except Note.DoesNotExist:
-        return Response({'msg': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
     
 @api_view(['GET'])
 def get_shared_note(request):
@@ -80,12 +80,12 @@ def get_shared_note(request):
 
     # Kiểm tra nếu có ít nhất một đối tượng
     if not shared_objects.exists():
-        return Response({'msg': 'No shared notes found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'No shared notes found'}, status=status.HTTP_404_NOT_FOUND)
 
     # Chuyển các đối tượng Shared thành dữ liệu qua serializer
     serializer = SharedSerializer(shared_objects, many=True)
 
-    return Response({'msg': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+    return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
     
 
 @api_view(['POST'])
@@ -99,14 +99,14 @@ def share_note(request, note_id):
 
         # Kiểm tra xem người dùng chia sẻ có phải là chủ sở hữu của note không
         if shared_user_id == request.user.id:
-            return Response({'msg': 'User is the owner'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'User is the owner'}, status=status.HTTP_403_FORBIDDEN)
         
         # Kiểm tra nếu đã chia sẻ note với người dùng này
         shared_objects = Shared.objects.filter(shared_user_id=request.user.id, note_id=note_id)
         shared_objects2 = Shared.objects.filter(shared_user_id=request.user.id, owner=request.user)
 
         if shared_objects.exists() or shared_objects2.exists():
-            return Response({'msg': 'User has already been shared'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'User has already been shared'}, status=status.HTTP_403_FORBIDDEN)
         
         # Kiểm tra quyền SHARE của người dùng
         shared_permission_check = Shared.objects.raw('''
@@ -128,14 +128,14 @@ def share_note(request, note_id):
                 permission=permission
             )
             
-            return Response({'msg': 'Note shared successfully'}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'Note shared successfully'}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'msg': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
         
     except Note.DoesNotExist:
-        return Response({'msg': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
     except User.DoesNotExist:
-        return Response({'msg': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['PATCH'])
@@ -156,17 +156,17 @@ def update_note(request, note_id):
             serializer = NoteSerializer(note_obj, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
-                return Response({'msg': 'Note updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
+                return Response({'message': 'Note updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         else:
             # Trường hợp người dùng không có quyền cập nhật
-            return Response({'msg': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
     
     except Note.DoesNotExist:
-        return Response({'msg': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response({'msg': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['DELETE'])
@@ -179,11 +179,11 @@ def delete_note(request, note_id):
         if request.user.admin or note_obj.user.id == request.user.id:
             # Nếu người dùng có quyền, tiến hành cập nhật note
             note_obj.delete()
-        return Response({'msg': 'note deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'note deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
     except Note.DoesNotExist:
-        return Response({'msg': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response({'msg': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])  # Chỉ cho phép người dùng đã đăng nhập
@@ -200,14 +200,14 @@ def change_permission(request):
             serializer = SharedSerializer(shared_obj, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
-                return Response({'msg': 'Permission updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
+                return Response({'message': 'Permission updated successfully', 'data': serializer.data}, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         else:
             # Trường hợp người dùng không có quyền cập nhật
-            return Response({'msg': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
     
     except Note.DoesNotExist:
-        return Response({'msg': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response({'msg': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -8,7 +8,7 @@ from .serializers import NoteSerializer
 from shared.models import Shared
 from user.models import User
 from shared.serializers import SharedSerializer
-
+from django.db.models import Q
 @api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])  # Yêu cầu người dùng phải xác thực
 def view_note(request):
@@ -87,6 +87,20 @@ def get_shared_note(request):
 
     return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
     
+@api_view(['GET'])
+def get_share_note(request):
+    # Lấy tất cả các đối tượng Shared liên quan đến người dùng
+    shared_objects = Shared.objects.filter(
+        Q(shared_by=request.user.id) | Q(owner=request.user.id)
+    )
+    # Kiểm tra nếu có ít nhất một đối tượng
+    if not shared_objects.exists():
+        return Response({'message': 'No shared notes found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Chuyển các đối tượng Shared thành dữ liệu qua serializer
+    serializer = SharedSerializer(shared_objects, many=True)
+
+    return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])  # Kiểm tra người dùng đã đăng nhập
@@ -97,15 +111,11 @@ def share_note(request, note_id):
         shared_user_id = request.data.get('shared_user_id')  # Gán shared_user_id
         permission = request.data.get('permission')
 
-        # Kiểm tra xem người dùng chia sẻ có phải là chủ sở hữu của note không
-        if shared_user_id == request.user.id:
-            return Response({'message': 'User is the owner'}, status=status.HTTP_403_FORBIDDEN)
-        
-        # Kiểm tra nếu đã chia sẻ note với người dùng này
-        shared_objects = Shared.objects.filter(shared_user_id=request.user.id, note_id=note_id)
-        shared_objects2 = Shared.objects.filter(shared_user_id=request.user.id, owner=request.user)
 
-        if shared_objects.exists() or shared_objects2.exists():
+        # Kiểm tra nếu đã chia sẻ note với người dùng này
+        shared_objects = Shared.objects.filter(shared_user_id=shared_user_id, note_id=note_id)
+
+        if shared_objects.exists():
             return Response({'message': 'User has already been shared'}, status=status.HTTP_403_FORBIDDEN)
         
         # Kiểm tra quyền SHARE của người dùng

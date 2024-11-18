@@ -54,14 +54,16 @@ def view_user(request):
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])  # Chỉ cho phép người dùng đã đăng nhập
+def delete_user(request, user_id):
     # DELETE method to delete a user
-    elif request.method == 'DELETE':
         if request.user.admin:
-            user_obj = User.objects.get(pk=request.data.get('id'))
+            user_obj = User.objects.get(pk=user_id)
             user_obj.delete()
             return Response({'message': 'user deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
-    return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])  # Chỉ cho phép người dùng đã đăng nhập

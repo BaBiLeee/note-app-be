@@ -74,6 +74,7 @@ def get_note_by_id(request, note_id):
         return Response({'message': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
     
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_shared_note(request):
     # Lấy tất cả các đối tượng Shared liên quan đến người dùng
     shared_objects = Shared.objects.filter(shared_user_id=request.user.id)
@@ -88,11 +89,27 @@ def get_shared_note(request):
     return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
     
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_share_note(request):
     # Lấy tất cả các đối tượng Shared liên quan đến người dùng
     shared_objects = Shared.objects.filter(
         Q(shared_by=request.user.id) | Q(owner=request.user.id)
     )
+    # Kiểm tra nếu có ít nhất một đối tượng
+    if not shared_objects.exists():
+        return Response({'message': 'No shared notes found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Chuyển các đối tượng Shared thành dữ liệu qua serializer
+    serializer = SharedSerializer(shared_objects, many=True)
+
+    return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def manage_share(request, user_id):
+    # Lấy tất cả các đối tượng Shared liên quan đến người dùng
+    shared_objects = Shared.objects.filter(owner=user_id)
+
     # Kiểm tra nếu có ít nhất một đối tượng
     if not shared_objects.exists():
         return Response({'message': 'No shared notes found'}, status=status.HTTP_404_NOT_FOUND)

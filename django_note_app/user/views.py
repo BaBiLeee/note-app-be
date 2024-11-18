@@ -21,7 +21,7 @@ def user_list(request):
     return Response({'message': 'Successfully retrieved user data', 'data': serializer.data}, status=status.HTTP_200_OK)
     
 
-@api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
+@api_view(['GET'])
 def view_user(request):
     if request.method == 'GET':
         if request.user.admin:
@@ -32,11 +32,11 @@ def view_user(request):
         serializer = UserSerializer(user_obj, many=True)
         return Response({'message': 'Successfully retrieved data', 'data': serializer.data}, status=status.HTTP_200_OK)
     
+@api_view(['PATCH'])
+def update_user(request, user_id):
     # PATCH method to partially update a user
-    elif request.method == 'PATCH':
         try:
             # Lấy user object
-            user_id = request.data.get('id')
             user_obj = User.objects.get(pk=user_id)
 
             # Kiểm tra quyền: admin hoặc chính người dùng
@@ -58,6 +58,8 @@ def view_user(request):
 @permission_classes([IsAuthenticated])  # Chỉ cho phép người dùng đã đăng nhập
 def delete_user(request, user_id):
     # DELETE method to delete a user
+        if user_id == 1:
+            return Response({'message': 'You cannot delete this account'}, status=status.HTTP_400_BAD_REQUEST)
         if request.user.admin:
             user_obj = User.objects.get(pk=user_id)
             user_obj.delete()
@@ -71,6 +73,9 @@ def update_status(request, user_id):
     try:
         # Lấy user object
         user_obj = get_object_or_404(User, pk=user_id)
+        
+        if user_id == 1:
+            return Response({"message": "You cannot change status this account"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Kiểm tra quyền: chỉ cho phép admin
         if request.user.admin:

@@ -211,6 +211,22 @@ def delete_note(request, note_id):
         return Response({'message': 'Note not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])  # Chỉ cho phép người dùng đã đăng nhập
+def delete_share(request, share_id):
+    try:
+        # Lấy note theo ID từ request data
+        share_obj = Shared.objects.get(id=share_id)
+        
+        if request.user.admin or share_obj.user.id == request.user.id:
+            # Nếu người dùng có quyền, tiến hành cập nhật note
+            share_obj.delete()
+        return Response({'message': 'Share deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+    except Note.DoesNotExist:
+        return Response({'message': 'Share not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])  # Chỉ cho phép người dùng đã đăng nhập

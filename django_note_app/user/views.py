@@ -41,6 +41,10 @@ def update_user(request, user_id):
 
             # Kiểm tra quyền: admin hoặc chính người dùng
             if request.user.admin or user_obj.id == user_id:
+                avatar = request.FILES.get('avatar')
+                if avatar:
+                    user_obj.avatar = avatar
+
                 serializer = UserSerializer(user_obj, data=request.data, partial=True)
                 if serializer.is_valid():
                     serializer.save()

@@ -22,7 +22,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=150, unique=True)
     password = models.CharField(max_length=150)
     fullname = models.TextField(max_length=150)
-    avatar = CloudinaryField('image')
+    avatar = CloudinaryField('image', blank=True, null=True)
     status = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

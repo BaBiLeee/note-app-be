@@ -20,7 +20,6 @@ import cloudinary.uploader
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -119,7 +118,7 @@ WSGI_APPLICATION = 'django_note_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'notedb',  
+        'NAME': 'new_db',  
         'USER': 'postgres',      
         'PASSWORD': 'abc123',      
         'HOST': 'localhost',
@@ -176,3 +175,10 @@ CLOUDINARY_STORAGE = {
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+cloudinary.config( 
+    cloud_name = "dd8yzbulm", 
+    api_key = "151248787892171", 
+    api_secret = "kdAz1hR2Sg9ejbTQb9_lh-1ZTfc", # Click 'View API Keys' above to copy your API secret
+    secure=True
+)
